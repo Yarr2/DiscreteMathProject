@@ -1,29 +1,91 @@
-class Graph:
-    def __init__(self, vertices : list):
-        self.vertices = vertices
-        self.number_of_vertices = len(vertices)
-        self.matrix = []
-        for _ in vertices:
-            temp = []
-            for _ in vertices:
-                temp.append(0)
-            self.matrix.append(temp)
+import random
+class Vertice:
+    def __init__(self,index : int = 0):
+        self.index = index
+    def __str__(self):
+        return f"Vertice {self.index}"
+class MatrixGraph:
+    def __init__(self):
+        self.number_of_vertices : int = 0
+        self.vertices : list[Vertice] = []
+        self.edge_matrix : list[list] = []
 
-    def add_edge(self,vertice_1,vertice_2) -> bool:
-        if not(vertice_1 in self.vertices and vertice_2 in self.vertices):
-            return False
-        self.matrix[vertice_1][vertice_2] = 1
-        self.matrix[vertice_2][vertice_1] = 1
-        return True
-
-    def remove_edge(self,vertice_1,vertice_2):
-        if not (vertice_1 in self.vertices and vertice_2 in self.vertices):
-            return False
-        self.matrix[vertice_1][vertice_2] = 0
-        self.matrix[vertice_2][vertice_1] = 0
-        return True
-
-    def add_vertice(self,vertice):
-        self.vertices.append(vertice)
+    def add_vertice(self,vertice : Vertice):
+        if vertice in self.vertices:
+            raise Exception("Graph already has this vertice")
+        vertice.index = self.number_of_vertices
         self.number_of_vertices += 1
+        self.vertices.append(vertice)
+        for row in self.edge_matrix:
+            row.append(0)
+        self.edge_matrix.append([0 for _ in range(self.number_of_vertices)])
 
+
+    def remove_vertice(self,vertice : Vertice):
+        if vertice not in self.vertices:
+            return
+        for row in self.edge_matrix:
+            del row[vertice.index - 1]
+        del self.edge_matrix[vertice.index - 1]
+        self.number_of_vertices -= 1
+        for index in range(vertice.index,self.number_of_vertices):
+            self.vertices[index].index -= 1
+        self.vertices.remove(vertice)
+
+
+
+    def add_vertices(self, vertices : list[Vertice]):
+        for vertice in vertices:
+            self.add_vertice(vertice)
+
+    def remove_vertices(self, vertices : list[Vertice]):
+        for vertice in vertices:
+            self.remove_vertice(vertice)
+
+    def add_edge(self, vertice_1 : Vertice, vertice_2 : Vertice):
+        if not (vertice_1 in self.vertices and vertice_2 in self.vertices):
+            print("Edge could not be constructed because vertices are not in graph")
+            return
+        self.edge_matrix[vertice_2.index][vertice_1.index] = 1
+        self.edge_matrix[vertice_1.index][vertice_2.index] = 1
+
+    def remove_edge(self, vertice_1 : Vertice, vertice_2 : Vertice):
+        if not (vertice_1 in self.vertices and vertice_2 in self.vertices):
+            print("Edge could not be removed because vertices are not in graph")
+            return
+        self.edge_matrix[vertice_2.index][vertice_1.index] = 0
+        self.edge_matrix[vertice_1.index][vertice_2.index] = 0
+
+    def add_edges(self,edges : list[tuple[Vertice,Vertice]]):
+        for vertice_1,vertice_2 in edges:
+            self.add_edge(vertice_1,vertice_2)
+
+    def remove_edges(self,edges : list[tuple[Vertice,Vertice]]):
+        for vertice_1,vertice_2 in edges:
+            self.remove_edge(vertice_1,vertice_2)
+
+    def show(self):
+        print(f"Number of vertices : {self.number_of_vertices}")
+        print(f"Vertices:",*self.vertices,"\n")
+        for row in self.edge_matrix:
+            print(*row)
+
+def generate_matrix_graph(number_of_vertices : int, density : float):
+    max_number_of_edges = number_of_vertices * (number_of_vertices - 1) // 2
+    number_of_edges = int(max_number_of_edges * min(1,density))
+    number_of_generated_edges = 0
+    graph = MatrixGraph()
+    graph.add_vertices([Vertice() for _ in range(number_of_vertices)])
+    while number_of_generated_edges < number_of_edges:
+        vertice_index_1 = random.randint(0,number_of_vertices - 1)
+        vertice_index_2 = random.randint(0,number_of_vertices - 1)
+        if vertice_index_1 == vertice_index_2: continue
+        if graph.edge_matrix[vertice_index_1][vertice_index_2] == 1: continue
+        graph.edge_matrix[vertice_index_1][vertice_index_2] = 1
+        graph.edge_matrix[vertice_index_2][vertice_index_1] = 1
+        number_of_generated_edges += 1
+    return graph
+
+if __name__ == '__main__':
+    graph = generate_matrix_graph(10,0.40)
+    graph.show()
